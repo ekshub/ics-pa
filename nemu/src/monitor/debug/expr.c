@@ -14,7 +14,9 @@ enum {
   TK_REG,
   TK_EQ,
   TK_NEQ,
-  TK_AND
+  TK_AND,
+  TK_NEG,
+  TK_DEREF
 
   /* TODO: Add more token types */
 
@@ -149,6 +151,8 @@ static int precedence(int type) {
     case '-': return 3;
     case '*':
     case '/': return 4;
+    case TK_NEG:
+    case TK_DEREF: return 5;
     default: return 100;
   }
 }
@@ -199,6 +203,22 @@ static uint32_t eval(int p, int q, bool *success) {
   if (level != 0 || op == -1) {
     *success = false;
     return 0;
+  }
+
+  if (tokens[op].type == TK_NEG) {
+    uint32_t val = eval(op + 1, q, success);
+    if (!*success) {
+      return 0;
+    }
+    return -val;
+  }
+
+  if (tokens[op].type == TK_DEREF) {
+    uint32_t addr = eval(op + 1, q, success);
+    if (!*success) {
+      return 0;
+    }
+    return vaddr_read(addr, 4);
   }
 
   uint32_t val1 = eval(p, op - 1, success);
@@ -304,6 +324,19 @@ uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
+  }
+
+  int i;
+  for (i = 0; i < nr_token; i ++) {
+    if (tokens[i].type == '-' || tokens[i].type == '*') {
+      if (i == 0 ||
+          !(tokens[i - 1].type == TK_DEC ||
+            tokens[i - 1].type == TK_HEX ||
+            tokens[i - 1].type == TK_REG ||
+            tokens[i - 1].type == ')')) {
+        tokens[i].type = (tokens[i].type == '-') ? TK_NEG : TK_DEREF;
+      }
+    }
   }
 
   if (nr_token == 0) {
