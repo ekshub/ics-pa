@@ -108,6 +108,23 @@ static int cmd_x(char *args) {
   return 0;
 }
 
+static int cmd_p(char *args) {
+  if (args == NULL) {
+    printf("Usage: p EXPR\n");
+    return 0;
+  }
+
+  bool success = true;
+  uint32_t value = expr(args, &success);
+  if (!success) {
+    printf("Bad expression: %s\n", args);
+    return 0;
+  }
+
+  printf("0x%08x (%u)\n", value, value);
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -120,6 +137,7 @@ static struct {
   { "si", "Step through N instructions (default 1)", cmd_si },
   { "info", "Print program status, e.g. info r", cmd_info },
   { "x", "Scan memory: x N EXPR", cmd_x },
+  { "p", "Evaluate expression: p EXPR", cmd_p },
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
