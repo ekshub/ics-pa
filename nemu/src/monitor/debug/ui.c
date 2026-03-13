@@ -32,6 +32,21 @@ static int cmd_c(char *args) {
   return 0;
 }
 
+static int cmd_si(char *args) {
+  uint64_t n = 1;
+  if (args != NULL) {
+    char *endptr = NULL;
+    unsigned long value = strtoul(args, &endptr, 10);
+    if (endptr == args || *endptr != '\0') {
+      printf("Usage: si [N]\n");
+      return 0;
+    }
+    n = value;
+  }
+  cpu_exec(n);
+  return 0;
+}
+
 static int cmd_q(char *args) {
   return -1;
 }
@@ -45,6 +60,7 @@ static struct {
 } cmd_table [] = {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
+  { "si", "Step through N instructions (default 1)", cmd_si },
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
