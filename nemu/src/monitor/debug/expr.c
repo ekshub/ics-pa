@@ -157,6 +157,10 @@ static int precedence(int type) {
   }
 }
 
+static bool is_unary(int type) {
+  return type == TK_NEG || type == TK_DEREF;
+}
+
 static uint32_t eval(int p, int q, bool *success) {
   if (p > q) {
     *success = false;
@@ -194,9 +198,16 @@ static uint32_t eval(int p, int q, bool *success) {
     }
 
     int prec = precedence(type);
-    if (prec <= min_prec) {
+    if (prec < min_prec) {
       min_prec = prec;
       op = i;
+      continue;
+    }
+
+    if (prec == min_prec) {
+      if (!is_unary(type)) {
+        op = i;
+      }
     }
   }
 
