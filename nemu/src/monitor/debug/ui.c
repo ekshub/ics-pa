@@ -71,6 +71,43 @@ static int cmd_info(char *args) {
   return 0;
 }
 
+static int cmd_x(char *args) {
+  if (args == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  char *n_str = strtok(args, " ");
+  char *expr_str = strtok(NULL, " ");
+  if (n_str == NULL || expr_str == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  char *endptr_n = NULL;
+  unsigned long n = strtoul(n_str, &endptr_n, 10);
+  if (endptr_n == n_str || *endptr_n != '\0') {
+    printf("Invalid N: %s\n", n_str);
+    return 0;
+  }
+
+  char *endptr_expr = NULL;
+  vaddr_t addr = (vaddr_t)strtoul(expr_str, &endptr_expr, 0);
+  if (endptr_expr == expr_str || *endptr_expr != '\0') {
+    printf("Invalid EXPR: %s\n", expr_str);
+    return 0;
+  }
+
+  uint32_t i;
+  for (i = 0; i < n; i++) {
+    vaddr_t cur = addr + i * 4;
+    uint32_t data = vaddr_read(cur, 4);
+    printf("0x%08x: 0x%08x\n", cur, data);
+  }
+
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -82,6 +119,7 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "si", "Step through N instructions (default 1)", cmd_si },
   { "info", "Print program status, e.g. info r", cmd_info },
+  { "x", "Scan memory: x N EXPR", cmd_x },
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
