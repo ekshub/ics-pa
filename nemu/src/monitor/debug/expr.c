@@ -115,6 +115,49 @@ static uint32_t eval_single(int p, int q, bool *success) {
   return 0;
 }
 
+static bool check_parentheses(int p, int q) {
+  if (tokens[p].type != '(' || tokens[q].type != ')') {
+    return false;
+  }
+
+  int level = 0;
+  int i;
+  for (i = p; i <= q; i ++) {
+    if (tokens[i].type == '(') {
+      level ++;
+    }
+    else if (tokens[i].type == ')') {
+      level --;
+      if (level < 0) {
+        return false;
+      }
+      if (level == 0 && i < q) {
+        return false;
+      }
+    }
+  }
+
+  return level == 0;
+}
+
+static uint32_t eval(int p, int q, bool *success) {
+  if (p > q) {
+    *success = false;
+    return 0;
+  }
+
+  if (p == q) {
+    return eval_single(p, q, success);
+  }
+
+  if (check_parentheses(p, q)) {
+    return eval(p + 1, q - 1, success);
+  }
+
+  *success = false;
+  return 0;
+}
+
 static bool make_token(char *e) {
   int position = 0;
   int i;
@@ -195,5 +238,5 @@ uint32_t expr(char *e, bool *success) {
   }
 
   *success = true;
-  return eval_single(0, nr_token - 1, success);
+  return eval(0, nr_token - 1, success);
 }
