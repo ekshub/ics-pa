@@ -7,7 +7,13 @@
 #include <regex.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ
+  TK_NOTYPE = 256,
+  TK_DEC,
+  TK_HEX,
+  TK_REG,
+  TK_EQ,
+  TK_NEQ,
+  TK_AND
 
   /* TODO: Add more token types */
 
@@ -22,9 +28,19 @@ static struct rule {
    * Pay attention to the precedence level of different rules.
    */
 
-  {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"==", TK_EQ}         // equal
+  {" +", TK_NOTYPE},           // spaces
+  {"==", TK_EQ},               // equal
+  {"!=", TK_NEQ},              // not equal
+  {"&&", TK_AND},              // and
+  {"\\+", '+'},                // plus
+  {"-", '-'},                  // minus
+  {"\\*", '*'},                // multiply
+  {"/", '/'},                  // divide
+  {"\\(", '('},                // left parenthesis
+  {"\\)", ')'},                // right parenthesis
+  {"0[xX][0-9a-fA-F]+", TK_HEX},// hexadecimal integer
+  {"[0-9]+", TK_DEC},           // decimal integer
+  {"\\$[a-zA-Z][a-zA-Z0-9]*", TK_REG} // register
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -80,7 +96,35 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-          default: TODO();
+          case TK_NOTYPE:
+            break;
+          case TK_DEC:
+          case TK_HEX:
+          case TK_REG:
+          case TK_EQ:
+          case TK_NEQ:
+          case TK_AND:
+          case '+':
+          case '-':
+          case '*':
+          case '/':
+          case '(':
+          case ')': {
+            Assert(nr_token < (int)(sizeof(tokens) / sizeof(tokens[0])),
+                "too many tokens in expression");
+            tokens[nr_token].type = rules[i].token_type;
+            if (substr_len >= (int)sizeof(tokens[nr_token].str)) {
+              printf("token is too long: %.*s\n", substr_len, substr_start);
+              return false;
+            }
+            strncpy(tokens[nr_token].str, substr_start, substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
+            nr_token ++;
+            break;
+          }
+          default:
+            printf("unknown token type: %d\n", rules[i].token_type);
+            return false;
         }
 
         break;
