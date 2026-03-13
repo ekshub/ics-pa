@@ -51,6 +51,26 @@ static int cmd_q(char *args) {
   return -1;
 }
 
+static int cmd_info(char *args) {
+  char *subcmd = strtok(args, " ");
+  if (subcmd == NULL) {
+    printf("Usage: info r\n");
+    return 0;
+  }
+
+  if (strcmp(subcmd, "r") == 0) {
+    int i;
+    for (i = 0; i < 8; i ++) {
+      printf("%3s\t0x%08x\n", regsl[i], reg_l(i));
+    }
+    printf("eip\t0x%08x\n", cpu.eip);
+    return 0;
+  }
+
+  printf("Unknown info subcommand '%s'\n", subcmd);
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -61,6 +81,7 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "si", "Step through N instructions (default 1)", cmd_si },
+  { "info", "Print program status, e.g. info r", cmd_info },
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
