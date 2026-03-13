@@ -15,6 +15,7 @@ enum {
   TK_EQ,
   TK_NEQ,
   TK_AND,
+  TK_POS,
   TK_NEG,
   TK_DEREF
 
@@ -151,6 +152,7 @@ static int precedence(int type) {
     case '-': return 3;
     case '*':
     case '/': return 4;
+    case TK_POS:
     case TK_NEG:
     case TK_DEREF: return 5;
     default: return 100;
@@ -158,7 +160,7 @@ static int precedence(int type) {
 }
 
 static bool is_unary(int type) {
-  return type == TK_NEG || type == TK_DEREF;
+  return type == TK_POS || type == TK_NEG || type == TK_DEREF;
 }
 
 static uint32_t eval(int p, int q, bool *success) {
@@ -214,6 +216,10 @@ static uint32_t eval(int p, int q, bool *success) {
   if (level != 0 || op == -1) {
     *success = false;
     return 0;
+  }
+
+  if (tokens[op].type == TK_POS) {
+    return eval(op + 1, q, success);
   }
 
   if (tokens[op].type == TK_NEG) {
@@ -339,13 +345,21 @@ uint32_t expr(char *e, bool *success) {
 
   int i;
   for (i = 0; i < nr_token; i ++) {
-    if (tokens[i].type == '-' || tokens[i].type == '*') {
+    if (tokens[i].type == '+' || tokens[i].type == '-' || tokens[i].type == '*') {
       if (i == 0 ||
           !(tokens[i - 1].type == TK_DEC ||
             tokens[i - 1].type == TK_HEX ||
             tokens[i - 1].type == TK_REG ||
             tokens[i - 1].type == ')')) {
-        tokens[i].type = (tokens[i].type == '-') ? TK_NEG : TK_DEREF;
+        if (tokens[i].type == '+') {
+          tokens[i].type = TK_POS;
+        }
+        else if (tokens[i].type == '-') {
+          tokens[i].type = TK_NEG;
+        }
+        else {
+          tokens[i].type = TK_DEREF;
+        }
       }
     }
   }
