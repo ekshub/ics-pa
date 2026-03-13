@@ -72,6 +72,48 @@ typedef struct token {
 Token tokens[32];
 int nr_token;
 
+static uint32_t reg_value(const char *name, bool *success) {
+  if (strcmp(name, "eip") == 0) {
+    return cpu.eip;
+  }
+
+  int i;
+  for (i = 0; i < 8; i ++) {
+    if (strcmp(name, regsl[i]) == 0) {
+      return reg_l(i);
+    }
+    if (strcmp(name, regsw[i]) == 0) {
+      return reg_w(i);
+    }
+    if (strcmp(name, regsb[i]) == 0) {
+      return reg_b(i);
+    }
+  }
+
+  *success = false;
+  return 0;
+}
+
+static uint32_t eval_single(int p, int q, bool *success) {
+  if (p != q) {
+    *success = false;
+    return 0;
+  }
+
+  if (tokens[p].type == TK_DEC) {
+    return strtoul(tokens[p].str, NULL, 10);
+  }
+  if (tokens[p].type == TK_HEX) {
+    return strtoul(tokens[p].str, NULL, 16);
+  }
+  if (tokens[p].type == TK_REG) {
+    return reg_value(tokens[p].str + 1, success);
+  }
+
+  *success = false;
+  return 0;
+}
+
 static bool make_token(char *e) {
   int position = 0;
   int i;
@@ -146,8 +188,11 @@ uint32_t expr(char *e, bool *success) {
     return 0;
   }
 
-  /* TODO: Insert codes to evaluate the expression. */
-  TODO();
+  if (nr_token == 0) {
+    *success = false;
+    return 0;
+  }
 
-  return 0;
+  *success = true;
+  return eval_single(0, nr_token - 1, success);
 }
