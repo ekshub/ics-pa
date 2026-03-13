@@ -142,6 +142,9 @@ static bool check_parentheses(int p, int q) {
 
 static int precedence(int type) {
   switch (type) {
+    case TK_AND: return 1;
+    case TK_EQ:
+    case TK_NEQ: return 2;
     case '+':
     case '-': return 3;
     case '*':
@@ -208,6 +211,9 @@ static uint32_t eval(int p, int q, bool *success) {
   }
 
   switch (tokens[op].type) {
+    case TK_AND: return val1 && val2;
+    case TK_EQ: return val1 == val2;
+    case TK_NEQ: return val1 != val2;
     case '+': return val1 + val2;
     case '-': return val1 - val2;
     case '*': return val1 * val2;
