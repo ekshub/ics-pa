@@ -140,6 +140,16 @@ static bool check_parentheses(int p, int q) {
   return level == 0;
 }
 
+static int precedence(int type) {
+  switch (type) {
+    case '+':
+    case '-': return 3;
+    case '*':
+    case '/': return 4;
+    default: return 100;
+  }
+}
+
 static uint32_t eval(int p, int q, bool *success) {
   if (p > q) {
     *success = false;
@@ -152,6 +162,64 @@ static uint32_t eval(int p, int q, bool *success) {
 
   if (check_parentheses(p, q)) {
     return eval(p + 1, q - 1, success);
+  }
+
+  int level = 0;
+  int op = -1;
+  int min_prec = 101;
+  int i;
+  for (i = p; i <= q; i ++) {
+    int type = tokens[i].type;
+    if (type == '(') {
+      level ++;
+      continue;
+    }
+    if (type == ')') {
+      level --;
+      if (level < 0) {
+        *success = false;
+        return 0;
+      }
+      continue;
+    }
+    if (level != 0) {
+      continue;
+    }
+
+    int prec = precedence(type);
+    if (prec <= min_prec) {
+      min_prec = prec;
+      op = i;
+    }
+  }
+
+  if (level != 0 || op == -1) {
+    *success = false;
+    return 0;
+  }
+
+  uint32_t val1 = eval(p, op - 1, success);
+  if (!*success) {
+    return 0;
+  }
+  uint32_t val2 = eval(op + 1, q, success);
+  if (!*success) {
+    return 0;
+  }
+
+  switch (tokens[op].type) {
+    case '+': return val1 + val2;
+    case '-': return val1 - val2;
+    case '*': return val1 * val2;
+    case '/':
+      if (val2 == 0) {
+        *success = false;
+        return 0;
+      }
+      return val1 / val2;
+    default:
+      *success = false;
+      return 0;
   }
 
   *success = false;
