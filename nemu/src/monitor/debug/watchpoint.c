@@ -1,5 +1,6 @@
 #include "monitor/watchpoint.h"
 #include "monitor/expr.h"
+#include <stdio.h>
 
 #define NR_WP 32
 
@@ -58,6 +59,44 @@ void free_wp(WP *wp) {
 
   cur->next = free_;
   free_ = cur;
+}
+
+void display_watchpoints(void) {
+  WP *cur = head;
+  if (cur == NULL) {
+    printf("No watchpoints.\n");
+    return;
+  }
+
+  printf("Num\tValue\t\tExpr\n");
+  while (cur != NULL) {
+    printf("%d\t0x%08x\t%s\n", cur->NO, cur->last_val, cur->expr);
+    cur = cur->next;
+  }
+}
+
+bool check_watchpoints(void) {
+  bool triggered = false;
+  WP *cur = head;
+  while (cur != NULL) {
+    bool success = true;
+    uint32_t new_val = expr(cur->expr, &success);
+    if (!success) {
+      cur = cur->next;
+      continue;
+    }
+
+    if (new_val != cur->last_val) {
+      printf("Watchpoint %d triggered: %s\n", cur->NO, cur->expr);
+      printf("Old value = 0x%08x\n", cur->last_val);
+      printf("New value = 0x%08x\n", new_val);
+      triggered = true;
+    }
+
+    cur = cur->next;
+  }
+
+  return triggered;
 }
 
 
