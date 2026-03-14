@@ -52,9 +52,14 @@ static int cmd_q(char *args) {
 }
 
 static int cmd_info(char *args) {
+  if (args == NULL) {
+    printf("Usage: info r|w\n");
+    return 0;
+  }
+
   char *subcmd = strtok(args, " ");
   if (subcmd == NULL) {
-    printf("Usage: info r\n");
+    printf("Usage: info r|w\n");
     return 0;
   }
 
@@ -64,6 +69,11 @@ static int cmd_info(char *args) {
       printf("%3s\t0x%08x\n", regsl[i], reg_l(i));
     }
     printf("eip\t0x%08x\n", cpu.eip);
+    return 0;
+  }
+
+  if (strcmp(subcmd, "w") == 0) {
+    display_watchpoints();
     return 0;
   }
 
@@ -125,6 +135,45 @@ static int cmd_p(char *args) {
   return 0;
 }
 
+static int cmd_w(char *args) {
+  if (args == NULL) {
+    printf("Usage: w EXPR\n");
+    return 0;
+  }
+
+  bool success = true;
+  WP *wp = add_watchpoint(args, &success);
+  if (!success || wp == NULL) {
+    printf("Bad expression: %s\n", args);
+    return 0;
+  }
+
+  printf("Watchpoint %d: %s\n", wp->NO, wp->expr);
+  return 0;
+}
+
+static int cmd_d(char *args) {
+  if (args == NULL) {
+    printf("Usage: d N\n");
+    return 0;
+  }
+
+  char *endptr = NULL;
+  long no = strtol(args, &endptr, 10);
+  if (endptr == args || *endptr != '\0' || no < 0) {
+    printf("Invalid watchpoint number: %s\n", args);
+    return 0;
+  }
+
+  if (!delete_watchpoint((int)no)) {
+    printf("No watchpoint number %ld\n", no);
+    return 0;
+  }
+
+  printf("Watchpoint %ld deleted\n", no);
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -138,6 +187,8 @@ static struct {
   { "info", "Print program status, e.g. info r", cmd_info },
   { "x", "Scan memory: x N EXPR", cmd_x },
   { "p", "Evaluate expression: p EXPR", cmd_p },
+  { "w", "Set watchpoint: w EXPR", cmd_w },
+  { "d", "Delete watchpoint: d N", cmd_d },
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */

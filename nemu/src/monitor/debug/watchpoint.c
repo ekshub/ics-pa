@@ -1,6 +1,7 @@
 #include "monitor/watchpoint.h"
 #include "monitor/expr.h"
 #include <stdio.h>
+#include <string.h>
 
 #define NR_WP 32
 
@@ -97,6 +98,42 @@ bool check_watchpoints(void) {
   }
 
   return triggered;
+}
+
+WP* add_watchpoint(const char *expr_str, bool *success) {
+  Assert(expr_str != NULL, "watchpoint expression is NULL");
+
+  WP *wp = new_wp();
+  strncpy(wp->expr, expr_str, sizeof(wp->expr) - 1);
+  wp->expr[sizeof(wp->expr) - 1] = '\0';
+
+  bool ok = true;
+  wp->last_val = expr(wp->expr, &ok);
+  if (!ok) {
+    free_wp(wp);
+    if (success != NULL) {
+      *success = false;
+    }
+    return NULL;
+  }
+
+  if (success != NULL) {
+    *success = true;
+  }
+  return wp;
+}
+
+bool delete_watchpoint(int no) {
+  WP *cur = head;
+  while (cur != NULL) {
+    if (cur->NO == no) {
+      free_wp(cur);
+      return true;
+    }
+    cur = cur->next;
+  }
+
+  return false;
 }
 
 
