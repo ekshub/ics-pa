@@ -160,6 +160,9 @@ static int cmd_d(char *args) {
 
   char *endptr = NULL;
   long no = strtol(args, &endptr, 10);
+  while (endptr != NULL && *endptr == ' ') {
+    endptr ++;
+  }
   if (endptr == args || *endptr != '\0' || no < 0) {
     printf("Invalid watchpoint number: %s\n", args);
     return 0;
