@@ -6,6 +6,7 @@
 void init_difftest();
 void init_regex();
 void init_wp_pool();
+void init_bp_pool();
 void init_device();
 
 void reg_test();
@@ -132,6 +133,9 @@ int init_monitor(int argc, char *argv[]) {
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();
+
+  /* Initialize the breakpoint pool. */
+  init_bp_pool();
 
   /* Initialize devices. */
   init_device();
