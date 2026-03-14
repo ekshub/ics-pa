@@ -17,7 +17,11 @@ enum {
   TK_AND,
   TK_POS,
   TK_NEG,
-  TK_DEREF
+  TK_DEREF,
+  TK_GT,
+  TK_LT,
+  TK_GE,
+  TK_LE
 
   /* TODO: Add more token types */
 
@@ -33,6 +37,10 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},           // spaces
+  {">=", TK_GE},               // greater than or equal
+  {"<=", TK_LE},               // less than or equal
+  {">", TK_GT},                // greater than
+  {"<", TK_LT},                // less than
   {"==", TK_EQ},               // equal
   {"!=", TK_NEQ},              // not equal
   {"&&", TK_AND},              // and
@@ -147,7 +155,11 @@ static int precedence(int type) {
   switch (type) {
     case TK_AND: return 1;
     case TK_EQ:
-    case TK_NEQ: return 2;
+    case TK_NEQ:
+    case TK_GT:
+    case TK_LT:
+    case TK_GE:
+    case TK_LE: return 2;
     case '+':
     case '-': return 3;
     case '*':
@@ -251,6 +263,10 @@ static uint32_t eval(int p, int q, bool *success) {
     case TK_AND: return val1 && val2;
     case TK_EQ: return val1 == val2;
     case TK_NEQ: return val1 != val2;
+    case TK_GT: return val1 > val2;
+    case TK_LT: return val1 < val2;
+    case TK_GE: return val1 >= val2;
+    case TK_LE: return val1 <= val2;
     case '+': return val1 + val2;
     case '-': return val1 - val2;
     case '*': return val1 * val2;
@@ -301,6 +317,10 @@ static bool make_token(char *e) {
           case TK_EQ:
           case TK_NEQ:
           case TK_AND:
+          case TK_GT:
+          case TK_LT:
+          case TK_GE:
+          case TK_LE:
           case '+':
           case '-':
           case '*':
