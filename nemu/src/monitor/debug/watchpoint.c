@@ -156,7 +156,7 @@ WP* add_watchpoint(const char *expr_str, const char *condition_str, bool *succes
 
     /* Validate condition expression */
     bool cond_ok = true;
-    uint32_t cond_val = expr(wp->condition, &cond_ok);
+    expr(wp->condition, &cond_ok);
     if (!cond_ok) {
       free_wp(wp);
       if (success != NULL) {
