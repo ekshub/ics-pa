@@ -91,6 +91,7 @@ bool check_watchpoints(void) {
       printf("Watchpoint %d triggered: %s\n", cur->NO, cur->expr);
       printf("Old value = 0x%08x\n", cur->last_val);
       printf("New value = 0x%08x\n", new_val);
+      cur->last_val = new_val;
       triggered = true;
     }
 
