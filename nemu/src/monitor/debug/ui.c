@@ -145,7 +145,7 @@ static int cmd_p(char *args) {
 
 static int cmd_w(char *args) {
   if (args == NULL) {
-    printf("Usage: w EXPR\n");
+    printf("Usage: w EXPR [if CONDITION]\n");
     return 0;
   }
 
@@ -153,18 +153,48 @@ static int cmd_w(char *args) {
     args ++;
   }
   if (*args == '\0') {
-    printf("Usage: w EXPR\n");
+    printf("Usage: w EXPR [if CONDITION]\n");
     return 0;
+  }
+
+  /* Parse expression and optional condition */
+  char *expr_str = args;
+  char *condition_str = NULL;
+
+  /* Look for " if " in the arguments */
+  char *if_pos = strstr(args, " if ");
+  if (if_pos != NULL) {
+    /* Split the string at " if " */
+    *if_pos = '\0';
+    condition_str = if_pos + 4; /* Skip " if " */
+
+    /* Trim leading spaces from condition */
+    while (*condition_str == ' ') {
+      condition_str++;
+    }
+
+    /* Check if condition is empty */
+    if (*condition_str == '\0') {
+      condition_str = NULL;
+    }
   }
 
   bool success = true;
-  WP *wp = add_watchpoint(args, &success);
+  WP *wp = add_watchpoint(expr_str, condition_str, &success);
   if (!success || wp == NULL) {
-    printf("Bad expression: %s\n", args);
+    printf("Bad expression: %s", expr_str);
+    if (condition_str != NULL) {
+      printf(" if %s", condition_str);
+    }
+    printf("\n");
     return 0;
   }
 
-  printf("Watchpoint %d: %s\n", wp->NO, wp->expr);
+  printf("Watchpoint %d: %s", wp->NO, wp->expr);
+  if (wp->has_condition) {
+    printf(" if %s", wp->condition);
+  }
+  printf("\n");
   return 0;
 }
 
