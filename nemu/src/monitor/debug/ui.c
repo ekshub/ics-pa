@@ -124,6 +124,14 @@ static int cmd_p(char *args) {
     return 0;
   }
 
+  while (*args == ' ') {
+    args ++;
+  }
+  if (*args == '\0') {
+    printf("Usage: p EXPR\n");
+    return 0;
+  }
+
   bool success = true;
   uint32_t value = expr(args, &success);
   if (!success) {
@@ -137,6 +145,14 @@ static int cmd_p(char *args) {
 
 static int cmd_w(char *args) {
   if (args == NULL) {
+    printf("Usage: w EXPR\n");
+    return 0;
+  }
+
+  while (*args == ' ') {
+    args ++;
+  }
+  if (*args == '\0') {
     printf("Usage: w EXPR\n");
     return 0;
   }
