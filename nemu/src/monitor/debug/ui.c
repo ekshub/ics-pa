@@ -1,6 +1,7 @@
 #include "monitor/monitor.h"
 #include "monitor/expr.h"
 #include "monitor/watchpoint.h"
+#include "monitor/breakpoint.h"
 #include "nemu.h"
 
 #include <stdlib.h>
@@ -53,13 +54,13 @@ static int cmd_q(char *args) {
 
 static int cmd_info(char *args) {
   if (args == NULL) {
-    printf("Usage: info r|w\n");
+    printf("Usage: info r|w|b\n");
     return 0;
   }
 
   char *subcmd = strtok(args, " ");
   if (subcmd == NULL) {
-    printf("Usage: info r|w\n");
+    printf("Usage: info r|w|b\n");
     return 0;
   }
 
@@ -74,6 +75,11 @@ static int cmd_info(char *args) {
 
   if (strcmp(subcmd, "w") == 0) {
     display_watchpoints();
+    return 0;
+  }
+
+  if (strcmp(subcmd, "b") == 0) {
+    display_breakpoints();
     return 0;
   }
 
@@ -223,6 +229,60 @@ static int cmd_d(char *args) {
   return 0;
 }
 
+/* Breakpoint commands */
+static int cmd_b(char *args) {
+  if (args == NULL) {
+    printf("Usage: b ADDR\n");
+    return 0;
+  }
+
+  bool success = true;
+  uint32_t addr = expr(args, &success);
+  if (!success) {
+    printf("Invalid address: %s\n", args);
+    return 0;
+  }
+
+  BP *bp = add_breakpoint(addr, &success);
+  if (!success || bp == NULL) {
+    printf("Failed to set breakpoint at 0x%08x\n", addr);
+    return 0;
+  }
+
+  printf("Breakpoint %d at 0x%08x\n", bp->NO, bp->addr);
+  return 0;
+}
+
+static int cmd_bl(char *args) {
+  display_breakpoints();
+  return 0;
+}
+
+static int cmd_bd(char *args) {
+  if (args == NULL) {
+    printf("Usage: bd N\n");
+    return 0;
+  }
+
+  char *endptr = NULL;
+  long no = strtol(args, &endptr, 10);
+  while (endptr != NULL && *endptr == ' ') {
+    endptr ++;
+  }
+  if (endptr == args || *endptr != '\0' || no < 0) {
+    printf("Invalid breakpoint number: %s\n", args);
+    return 0;
+  }
+
+  if (!delete_breakpoint((int)no)) {
+    printf("No breakpoint number %ld\n", no);
+    return 0;
+  }
+
+  printf("Breakpoint %ld deleted\n", no);
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -238,6 +298,9 @@ static struct {
   { "p", "Evaluate expression: p EXPR", cmd_p },
   { "w", "Set watchpoint: w EXPR", cmd_w },
   { "d", "Delete watchpoint: d N", cmd_d },
+  { "b", "Set breakpoint: b ADDR", cmd_b },
+  { "bl", "List all breakpoints", cmd_bl },
+  { "bd", "Delete breakpoint: bd N", cmd_bd },
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
