@@ -1,6 +1,7 @@
 #include "nemu.h"
 #include "monitor/monitor.h"
 #include "monitor/watchpoint.h"
+#include "monitor/breakpoint.h"
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -19,6 +20,10 @@ void cpu_exec(uint64_t n) {
     printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
     return;
   }
+
+  /* Re-enable breakpoints before execution */
+  reenable_breakpoints();
+
   nemu_state = NEMU_RUNNING;
 
   bool print_flag = n < MAX_INSTR_TO_PRINT;
