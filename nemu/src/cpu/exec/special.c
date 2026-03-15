@@ -1,5 +1,6 @@
 #include "cpu/exec.h"
 #include "monitor/monitor.h"
+#include "monitor/breakpoint.h"
 
 make_EHelper(nop) {
   print_asm("nop");
@@ -43,4 +44,30 @@ make_EHelper(nemu_trap) {
   extern void diff_test_skip_qemu();
   diff_test_skip_qemu();
 #endif
+}
+
+make_EHelper(int3) {
+  print_asm("int3");
+
+  /* Get the address where int3 is executed */
+  vaddr_t bp_addr = cpu.eip - 1; /* eip points to next instruction */
+
+  /* Find breakpoint at this address */
+  BP *bp = find_breakpoint_at(bp_addr);
+  if (bp != NULL) {
+    /* Restore original instruction */
+    vaddr_write(bp_addr, 1, bp->orig_byte);
+
+    /* Set eip back to breakpoint address */
+    cpu.eip = bp_addr;
+
+    /* Stop execution */
+    nemu_state = NEMU_STOP;
+
+    printf("Breakpoint #%d at 0x%08x\n", bp->NO, bp_addr);
+  } else {
+    /* No breakpoint found, this shouldn't happen */
+    printf("int3 executed at 0x%08x but no breakpoint found\n", bp_addr);
+    nemu_state = NEMU_STOP;
+  }
 }
