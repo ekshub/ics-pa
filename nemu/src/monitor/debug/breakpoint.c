@@ -217,14 +217,21 @@ void reenable_breakpoints(void) {
   BP *cur = head;
   while (cur != NULL) {
     if (cur->enabled) {
-      /* Check if current byte is still the original instruction */
+      /* Check current byte at breakpoint address */
       uint8_t current_byte = vaddr_read(cur->addr, 1);
+      printf("[reenable] breakpoint #%d at 0x%08x: orig=0x%02x current=0x%02x\n",
+             cur->NO, cur->addr, cur->orig_byte, current_byte);
+
       if (current_byte == cur->orig_byte) {
+        /* Original instruction, need to set int3 */
         vaddr_write(cur->addr, 1, 0xCC);
+      } else if (current_byte == 0xCC) {
+        /* Already int3, breakpoint is active */
+        /* Do nothing */
       } else {
-        /* Memory changed, disable breakpoint */
-        printf("Warning: Memory at breakpoint #%d (0x%08x) changed, disabling\n",
-               cur->NO, cur->addr);
+        /* Memory changed to something else, disable breakpoint */
+        printf("Warning: Memory at breakpoint #%d (0x%08x) changed from 0x%02x to 0x%02x, disabling\n",
+               cur->NO, cur->addr, cur->orig_byte, current_byte);
         cur->enabled = false;
       }
     }

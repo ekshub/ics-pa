@@ -49,8 +49,9 @@ make_EHelper(nemu_trap) {
 make_EHelper(int3) {
   print_asm("int3");
 
-  /* Get the address where int3 is executed */
-  vaddr_t bp_addr = cpu.eip - 1; /* eip points to next instruction */
+  /* eip currently points to the byte AFTER int3 */
+  vaddr_t bp_addr = *eip - 1;
+  printf("[int3] *eip = 0x%08x, bp_addr = 0x%08x\n", *eip, bp_addr);
 
   /* Find breakpoint at this address */
   BP *bp = find_breakpoint_at(bp_addr);
@@ -58,15 +59,18 @@ make_EHelper(int3) {
     /* Restore original instruction */
     vaddr_write(bp_addr, 1, bp->orig_byte);
 
-    /* Set eip back to breakpoint address */
-    cpu.eip = bp_addr;
+    /* Set eip back to breakpoint address (pointing to restored instruction) */
+    *eip = bp_addr;
 
     /* Stop execution */
     nemu_state = NEMU_STOP;
 
     printf("Breakpoint #%d at 0x%08x\n", bp->NO, bp_addr);
   } else {
-    /* No breakpoint found, this shouldn't happen */
+    /* No breakpoint found, this could happen if:
+     * 1. int3 was in the original program (not set by breakpoint)
+     * 2. Breakpoint was deleted while int3 was in memory
+     */
     printf("int3 executed at 0x%08x but no breakpoint found\n", bp_addr);
     nemu_state = NEMU_STOP;
   }
