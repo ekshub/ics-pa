@@ -84,13 +84,7 @@ BP* add_breakpoint(vaddr_t addr, bool *success) {
   }
 
   /* Read original instruction byte */
-  bool ok = true;
-  uint8_t orig_byte = vaddr_read(addr, 1, &ok);
-  if (!ok) {
-    if (success != NULL) *success = false;
-    printf("Cannot read memory at address 0x%08x\n", addr);
-    return NULL;
-  }
+  uint8_t orig_byte = vaddr_read(addr, 1);
 
   /* Check if it's already an int3 instruction (0xCC) */
   if (orig_byte == 0xCC) {
@@ -140,9 +134,8 @@ void enable_breakpoint(int no) {
     if (cur->NO == no) {
       if (!cur->enabled) {
         /* Read current byte to ensure it's not already modified */
-        bool ok = true;
-        uint8_t current_byte = vaddr_read(cur->addr, 1, &ok);
-        if (ok && current_byte == cur->orig_byte) {
+        uint8_t current_byte = vaddr_read(cur->addr, 1);
+        if (current_byte == cur->orig_byte) {
           vaddr_write(cur->addr, 1, 0xCC);
           cur->enabled = true;
           printf("Breakpoint #%d enabled\n", no);
@@ -225,9 +218,8 @@ void reenable_breakpoints(void) {
   while (cur != NULL) {
     if (cur->enabled) {
       /* Check if current byte is still the original instruction */
-      bool ok = true;
-      uint8_t current_byte = vaddr_read(cur->addr, 1, &ok);
-      if (ok && current_byte == cur->orig_byte) {
+      uint8_t current_byte = vaddr_read(cur->addr, 1);
+      if (current_byte == cur->orig_byte) {
         vaddr_write(cur->addr, 1, 0xCC);
       } else {
         /* Memory changed, disable breakpoint */
