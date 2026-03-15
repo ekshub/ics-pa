@@ -220,14 +220,10 @@ void reenable_breakpoints(void) {
     if (cur->enabled) {
       /* Check current byte at breakpoint address */
       uint8_t current_byte = vaddr_read(cur->addr, 1);
-      printf("[reenable] breakpoint #%d at 0x%08x: orig=0x%02x current=0x%02x\n",
-             cur->NO, cur->addr, cur->orig_byte, current_byte);
 
       /* Check if program is currently stopped at this breakpoint */
       if (cpu.eip == cur->addr) {
         /* Program is stopped at breakpoint address, do not re-enable int3 yet */
-        printf("[reenable] program stopped at breakpoint #%d (0x%08x), skipping int3\n",
-               cur->NO, cur->addr);
       } else if (current_byte == cur->orig_byte) {
         /* Original instruction, need to set int3 */
         vaddr_write(cur->addr, 1, 0xCC);

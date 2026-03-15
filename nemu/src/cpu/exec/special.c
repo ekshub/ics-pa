@@ -51,7 +51,6 @@ make_EHelper(int3) {
 
   /* eip currently points to the byte AFTER int3 */
   vaddr_t bp_addr = *eip - 1;
-  printf("[int3] *eip = 0x%08x, bp_addr = 0x%08x\n", *eip, bp_addr);
 
   /* Find breakpoint at this address */
   BP *bp = find_breakpoint_at(bp_addr);
