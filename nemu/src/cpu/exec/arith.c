@@ -11,6 +11,7 @@ make_EHelper(sub) {
   operand_write(id_dest, &t2);
 
   rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
 
   // Set CF: dest < src (unsigned)
   rtl_sltu(&t0, &id_dest->val, &id_src->val);

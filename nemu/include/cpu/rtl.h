@@ -124,6 +124,7 @@ make_rtl_setget_eflags(OF)
 make_rtl_setget_eflags(ZF)
 make_rtl_setget_eflags(SF)
 make_rtl_setget_eflags(IF)
+make_rtl_setget_eflags(PF)
 
 static inline void rtl_mv(rtlreg_t* dest, const rtlreg_t *src1) {
   // dest <- src1
@@ -196,9 +197,80 @@ static inline void rtl_update_SF(const rtlreg_t* result, int width) {
   cpu.SF = (*result & mask) ? 1 : 0;
 }
 
+static inline void rtl_update_PF(const rtlreg_t* result) {
+  // PF is set if low 8 bits have even number of 1s
+  uint8_t low_byte = *result & 0xFF;
+  // Count bits in low_byte
+  uint32_t count = 0;
+  for (int i = 0; i < 8; i++) {
+    if (low_byte & (1 << i)) count++;
+  }
+  cpu.PF = (count % 2 == 0);
+}
+
 static inline void rtl_update_ZFSF(const rtlreg_t* result, int width) {
   rtl_update_ZF(result, width);
   rtl_update_SF(result, width);
+}
+
+static inline void rtl_setcc(rtlreg_t* dest, uint8_t subcode) {
+  // dest <- (condition codes satisfy subcode ? 1 : 0)
+  uint32_t condition = 0;
+
+  switch (subcode) {
+    case 0x0: // o: overflow
+      condition = cpu.OF;
+      break;
+    case 0x1: // no: not overflow
+      condition = !cpu.OF;
+      break;
+    case 0x2: // b/nb?: b: below (CF=1)
+      condition = cpu.CF;
+      break;
+    case 0x3: // nb: not below (CF=0)
+      condition = !cpu.CF;
+      break;
+    case 0x4: // e: equal (ZF=1)
+      condition = cpu.ZF;
+      break;
+    case 0x5: // ne: not equal (ZF=0)
+      condition = !cpu.ZF;
+      break;
+    case 0x6: // be: below or equal (CF=1 or ZF=1)
+      condition = cpu.CF || cpu.ZF;
+      break;
+    case 0x7: // nbe: not below nor equal (CF=0 and ZF=0)
+      condition = !cpu.CF && !cpu.ZF;
+      break;
+    case 0x8: // s: sign (SF=1)
+      condition = cpu.SF;
+      break;
+    case 0x9: // ns: not sign (SF=0)
+      condition = !cpu.SF;
+      break;
+    case 0xa: // p: parity (PF=1)
+      condition = cpu.PF;
+      break;
+    case 0xb: // np: not parity (PF=0)
+      condition = !cpu.PF;
+      break;
+    case 0xc: // l: less (SF != OF)
+      condition = cpu.SF != cpu.OF;
+      break;
+    case 0xd: // nl: not less (SF = OF)
+      condition = cpu.SF == cpu.OF;
+      break;
+    case 0xe: // le: less or equal (ZF=1 or SF != OF)
+      condition = cpu.ZF || (cpu.SF != cpu.OF);
+      break;
+    case 0xf: // nle: not less nor equal (ZF=0 and SF = OF)
+      condition = !cpu.ZF && (cpu.SF == cpu.OF);
+      break;
+    default:
+      assert(0);
+  }
+
+  *dest = condition ? 1 : 0;
 }
 
 #endif

@@ -17,6 +17,7 @@ make_EHelper(xor) {
   operand_write(id_dest, &t2);
 
   rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
 
   // CF and OF are cleared by XOR
   rtl_set_CF(&tzero);
