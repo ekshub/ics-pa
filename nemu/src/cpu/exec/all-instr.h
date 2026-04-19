@@ -20,6 +20,7 @@ make_EHelper(and);
 make_EHelper(or);
 
 make_EHelper(operand_size);
+make_EHelper(nop);
 
 make_EHelper(inv);
 make_EHelper(nemu_trap);
