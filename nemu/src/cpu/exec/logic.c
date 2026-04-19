@@ -1,7 +1,13 @@
 #include "cpu/exec.h"
 
 make_EHelper(test) {
-  TODO();
+  rtl_and(&t2, &id_dest->val, &id_src->val);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
+
+  rtl_set_CF(&tzero);
+  rtl_set_OF(&tzero);
 
   print_asm_template2(test);
 }
@@ -34,7 +40,14 @@ make_EHelper(xor) {
 }
 
 make_EHelper(or) {
-  TODO();
+  rtl_or(&t2, &id_dest->val, &id_src->val);
+  operand_write(id_dest, &t2);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
+
+  rtl_set_CF(&tzero);
+  rtl_set_OF(&tzero);
 
   print_asm_template2(or);
 }
@@ -69,7 +82,8 @@ make_EHelper(setcc) {
 }
 
 make_EHelper(not) {
-  TODO();
+  rtl_not(&id_dest->val);
+  operand_write(id_dest, &id_dest->val);
 
   print_asm_template1(not);
 }
