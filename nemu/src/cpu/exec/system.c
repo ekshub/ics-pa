@@ -3,8 +3,12 @@
 void diff_test_skip_qemu();
 void diff_test_skip_nemu();
 
+static uint32_t idtr_base;
+static uint16_t idtr_limit;
+
 make_EHelper(lidt) {
-  TODO();
+  idtr_limit = vaddr_read(id_dest->addr, 2);
+  idtr_base = vaddr_read(id_dest->addr + 2, 4);
 
   print_asm_template1(lidt);
 }
