@@ -15,15 +15,28 @@ void rtl_setcc(rtlreg_t* dest, uint8_t subcode) {
   // dest <- ( cc is satisfied ? 1 : 0)
   switch (subcode & 0xe) {
     case CC_O:
+      *dest = cpu.OF;
+      break;
     case CC_B:
+      *dest = cpu.CF;
+      break;
     case CC_E:
+      *dest = cpu.ZF;
+      break;
     case CC_BE:
+      *dest = (cpu.CF || cpu.ZF);
+      break;
     case CC_S:
+      *dest = cpu.SF;
+      break;
     case CC_L:
+      *dest = (cpu.SF != cpu.OF);
+      break;
     case CC_LE:
-      TODO();
+      *dest = ((cpu.ZF) || (cpu.SF != cpu.OF));
+      break;
     default: panic("should not reach here");
-    case CC_P: panic("n86 does not have PF");
+    case CC_P: *dest = cpu.PF; break; // Added PF support for PA2
   }
 
   if (invert) {
