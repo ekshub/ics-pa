@@ -14,10 +14,14 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
   uint32_t low = vaddr_read(gate_addr, 4);
   uint32_t high = vaddr_read(gate_addr + 4, 4);
   uint32_t target = (low & 0xffffu) | (high & 0xffff0000u);
+  GateDesc gate;
+  gate.val = high;
+  Assert(gate.present, "interrupt gate %d not present", NO);
 
   rtl_push(&cpu.eflags);
   rtl_push(&tzero);
   rtl_push(&ret_addr);
+  cpu.IF = 0;
 
   decoding.jmp_eip = target;
   decoding.is_jmp = 1;
