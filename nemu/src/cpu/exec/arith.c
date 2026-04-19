@@ -60,19 +60,58 @@ make_EHelper(cmp) {
 }
 
 make_EHelper(inc) {
-  TODO();
+  rtl_get_CF(&t3);
+
+  rtl_addi(&t2, &id_dest->val, 1);
+  operand_write(id_dest, &t2);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
+
+  rtl_xor(&t0, &id_dest->val, &t2);
+  rtl_msb(&t0, &t0, id_dest->width);
+  rtl_set_OF(&t0);
+
+  rtl_set_CF(&t3);
 
   print_asm_template1(inc);
 }
 
 make_EHelper(dec) {
-  TODO();
+  rtl_get_CF(&t3);
+
+  rtl_subi(&t2, &id_dest->val, 1);
+  operand_write(id_dest, &t2);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
+
+  rtl_xor(&t0, &id_dest->val, &t2);
+  rtl_msb(&t0, &t0, id_dest->width);
+  rtl_set_OF(&t0);
+
+  rtl_set_CF(&t3);
 
   print_asm_template1(dec);
 }
 
 make_EHelper(neg) {
-  TODO();
+  rtl_sub(&t2, &tzero, &id_dest->val);
+  operand_write(id_dest, &t2);
+
+  rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
+
+  rtl_neq0(&t0, &id_dest->val);
+  rtl_set_CF(&t0);
+
+  switch (id_dest->width) {
+    case 1: rtl_eqi(&t0, &id_dest->val, 0x80); break;
+    case 2: rtl_eqi(&t0, &id_dest->val, 0x8000); break;
+    case 4: rtl_eqi(&t0, &id_dest->val, (int)0x80000000u); break;
+    default: assert(0);
+  }
+  rtl_set_OF(&t0);
 
   print_asm_template1(neg);
 }
