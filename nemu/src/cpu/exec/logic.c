@@ -52,6 +52,42 @@ make_EHelper(or) {
   print_asm_template2(or);
 }
 
+make_EHelper(rol) {
+  uint8_t shamt = id_src->val & 0x1f;
+  if (shamt == 0) {
+    print_asm_template2(rol);
+    return;
+  }
+
+  uint32_t width_bits = id_dest->width * 8;
+  uint32_t mask = (id_dest->width == 4) ? 0xffffffffu : ((1u << width_bits) - 1);
+  uint32_t value = id_dest->val & mask;
+  shamt %= width_bits;
+  value = ((value << shamt) | (value >> (width_bits - shamt))) & mask;
+  rtl_li(&t2, value);
+  operand_write(id_dest, &t2);
+
+  print_asm_template2(rol);
+}
+
+make_EHelper(ror) {
+  uint8_t shamt = id_src->val & 0x1f;
+  if (shamt == 0) {
+    print_asm_template2(ror);
+    return;
+  }
+
+  uint32_t width_bits = id_dest->width * 8;
+  uint32_t mask = (id_dest->width == 4) ? 0xffffffffu : ((1u << width_bits) - 1);
+  uint32_t value = id_dest->val & mask;
+  shamt %= width_bits;
+  value = ((value >> shamt) | (value << (width_bits - shamt))) & mask;
+  rtl_li(&t2, value);
+  operand_write(id_dest, &t2);
+
+  print_asm_template2(ror);
+}
+
 make_EHelper(sar) {
   uint8_t shamt = id_src->val & 0x1f;
   if (shamt == 0) {
