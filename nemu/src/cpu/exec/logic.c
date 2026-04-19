@@ -1,5 +1,9 @@
 #include "cpu/exec.h"
 
+static inline uint32_t width_mask(int width) {
+  return width == 4 ? 0xffffffffu : ((1u << (width * 8)) - 1);
+}
+
 make_EHelper(test) {
   rtl_and(&t2, &id_dest->val, &id_src->val);
 
@@ -60,12 +64,21 @@ make_EHelper(rol) {
   }
 
   uint32_t width_bits = id_dest->width * 8;
-  uint32_t mask = (id_dest->width == 4) ? 0xffffffffu : ((1u << width_bits) - 1);
+  uint32_t mask = width_mask(id_dest->width);
   uint32_t value = id_dest->val & mask;
   shamt %= width_bits;
   value = ((value << shamt) | (value >> (width_bits - shamt))) & mask;
   rtl_li(&t2, value);
   operand_write(id_dest, &t2);
+
+  rtl_andi(&t0, &t2, 0x1);
+  rtl_set_CF(&t0);
+  if (shamt == 1) {
+    rtl_msb(&t0, &t2, id_dest->width);
+    rtl_get_CF(&t1);
+    rtl_xor(&t0, &t0, &t1);
+    rtl_set_OF(&t0);
+  }
 
   print_asm_template2(rol);
 }
@@ -78,12 +91,22 @@ make_EHelper(ror) {
   }
 
   uint32_t width_bits = id_dest->width * 8;
-  uint32_t mask = (id_dest->width == 4) ? 0xffffffffu : ((1u << width_bits) - 1);
+  uint32_t mask = width_mask(id_dest->width);
   uint32_t value = id_dest->val & mask;
   shamt %= width_bits;
   value = ((value >> shamt) | (value << (width_bits - shamt))) & mask;
   rtl_li(&t2, value);
   operand_write(id_dest, &t2);
+
+  rtl_msb(&t0, &t2, id_dest->width);
+  rtl_set_CF(&t0);
+  if (shamt == 1) {
+    rtl_shri(&t0, &t2, id_dest->width * 8 - 2);
+    rtl_andi(&t0, &t0, 0x1);
+    rtl_get_CF(&t1);
+    rtl_xor(&t0, &t0, &t1);
+    rtl_set_OF(&t0);
+  }
 
   print_asm_template2(ror);
 }
@@ -95,13 +118,22 @@ make_EHelper(sar) {
     return;
   }
 
+  rtl_mv(&t1, &id_dest->val);
+  rtl_sext(&t1, &t1, id_dest->width);
   rtl_li(&t0, shamt);
-  rtl_sar(&t2, &id_dest->val, &t0);
+  rtl_sar(&t2, &t1, &t0);
   operand_write(id_dest, &t2);
 
   rtl_update_ZFSF(&t2, id_dest->width);
   rtl_update_PF(&t2);
-  // unnecessary to update CF and OF in NEMU
+  if (shamt <= id_dest->width * 8) {
+    rtl_shri(&t0, &id_dest->val, shamt - 1);
+    rtl_andi(&t0, &t0, 0x1);
+    rtl_set_CF(&t0);
+  }
+  if (shamt == 1) {
+    rtl_set_OF(&tzero);
+  }
 
   print_asm_template2(sar);
 }
@@ -119,7 +151,17 @@ make_EHelper(shl) {
 
   rtl_update_ZFSF(&t2, id_dest->width);
   rtl_update_PF(&t2);
-  // unnecessary to update CF and OF in NEMU
+  if (shamt <= id_dest->width * 8) {
+    rtl_shri(&t0, &id_dest->val, id_dest->width * 8 - shamt);
+    rtl_andi(&t0, &t0, 0x1);
+    rtl_set_CF(&t0);
+  }
+  if (shamt == 1) {
+    rtl_msb(&t0, &t2, id_dest->width);
+    rtl_get_CF(&t1);
+    rtl_xor(&t0, &t0, &t1);
+    rtl_set_OF(&t0);
+  }
 
   print_asm_template2(shl);
 }
@@ -137,7 +179,15 @@ make_EHelper(shr) {
 
   rtl_update_ZFSF(&t2, id_dest->width);
   rtl_update_PF(&t2);
-  // unnecessary to update CF and OF in NEMU
+  if (shamt <= id_dest->width * 8) {
+    rtl_shri(&t0, &id_dest->val, shamt - 1);
+    rtl_andi(&t0, &t0, 0x1);
+    rtl_set_CF(&t0);
+  }
+  if (shamt == 1) {
+    rtl_msb(&t0, &id_dest->val, id_dest->width);
+    rtl_set_OF(&t0);
+  }
 
   print_asm_template2(shr);
 }

@@ -124,6 +124,7 @@ make_EHelper(adc) {
   operand_write(id_dest, &t2);
 
   rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
 
   rtl_sltu(&t0, &t2, &id_dest->val);
   rtl_or(&t0, &t3, &t0);
@@ -147,6 +148,7 @@ make_EHelper(sbb) {
   operand_write(id_dest, &t2);
 
   rtl_update_ZFSF(&t2, id_dest->width);
+  rtl_update_PF(&t2);
 
   rtl_sltu(&t0, &id_dest->val, &t2);
   rtl_or(&t0, &t3, &t0);
@@ -181,6 +183,25 @@ make_EHelper(mul) {
     default: assert(0);
   }
 
+  switch (id_dest->width) {
+    case 1:
+      rtl_shri(&t2, &t1, 8);
+      rtl_andi(&t2, &t2, 0xff);
+      rtl_neq0(&t2, &t2);
+      break;
+    case 2:
+      rtl_shri(&t2, &t1, 16);
+      rtl_andi(&t2, &t2, 0xffff);
+      rtl_neq0(&t2, &t2);
+      break;
+    case 4:
+      rtl_neq0(&t2, &t0);
+      break;
+    default: assert(0);
+  }
+  rtl_set_CF(&t2);
+  rtl_set_OF(&t2);
+
   print_asm_template1(mul);
 }
 
@@ -205,6 +226,25 @@ make_EHelper(imul1) {
     default: assert(0);
   }
 
+  switch (id_dest->width) {
+    case 1:
+    case 2:
+      rtl_mv(&t2, &t1);
+      rtl_sext(&t2, &t2, id_dest->width);
+      rtl_xor(&t2, &t2, &t1);
+      rtl_neq0(&t2, &t2);
+      break;
+    case 4:
+      rtl_msb(&t2, &t1, 4);
+      rtl_sub(&t2, &tzero, &t2);
+      rtl_xor(&t2, &t2, &t0);
+      rtl_neq0(&t2, &t2);
+      break;
+    default: assert(0);
+  }
+  rtl_set_CF(&t2);
+  rtl_set_OF(&t2);
+
   print_asm_template1(imul);
 }
 
@@ -216,17 +256,54 @@ make_EHelper(imul2) {
   rtl_imul(&t0, &t1, &id_dest->val, &id_src->val);
   operand_write(id_dest, &t1);
 
+  switch (id_dest->width) {
+    case 1:
+    case 2:
+      rtl_mv(&t2, &t1);
+      rtl_sext(&t2, &t2, id_dest->width);
+      rtl_xor(&t2, &t2, &t1);
+      rtl_neq0(&t2, &t2);
+      break;
+    case 4:
+      rtl_msb(&t2, &t1, 4);
+      rtl_sub(&t2, &tzero, &t2);
+      rtl_xor(&t2, &t2, &t0);
+      rtl_neq0(&t2, &t2);
+      break;
+    default: assert(0);
+  }
+  rtl_set_CF(&t2);
+  rtl_set_OF(&t2);
+
   print_asm_template2(imul);
 }
 
 // imul with three operands
 make_EHelper(imul3) {
   rtl_sext(&id_src->val, &id_src->val, id_src->width);
-  rtl_sext(&id_src2->val, &id_src2->val, id_src->width);
-  rtl_sext(&id_dest->val, &id_dest->val, id_dest->width);
+  rtl_sext(&id_src2->val, &id_src2->val, id_src2->width);
 
   rtl_imul(&t0, &t1, &id_src2->val, &id_src->val);
   operand_write(id_dest, &t1);
+
+  switch (id_dest->width) {
+    case 1:
+    case 2:
+      rtl_mv(&t2, &t1);
+      rtl_sext(&t2, &t2, id_dest->width);
+      rtl_xor(&t2, &t2, &t1);
+      rtl_neq0(&t2, &t2);
+      break;
+    case 4:
+      rtl_msb(&t2, &t1, 4);
+      rtl_sub(&t2, &tzero, &t2);
+      rtl_xor(&t2, &t2, &t0);
+      rtl_neq0(&t2, &t2);
+      break;
+    default: assert(0);
+  }
+  rtl_set_CF(&t2);
+  rtl_set_OF(&t2);
 
   print_asm_template3(imul);
 }
