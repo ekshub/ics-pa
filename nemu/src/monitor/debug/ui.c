@@ -29,6 +29,7 @@ char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
+  nemu_enable_deadloop_detection(true);
   cpu_exec(-1);
   return 0;
 }
@@ -44,6 +45,7 @@ static int cmd_si(char *args) {
     }
     n = value;
   }
+  nemu_enable_deadloop_detection(false);
   cpu_exec(n);
   return 0;
 }

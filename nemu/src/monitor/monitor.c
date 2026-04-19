@@ -17,6 +17,19 @@ FILE *log_fp = NULL;
 static char *log_file = NULL;
 static char *img_file = NULL;
 static int is_batch_mode = false;
+static bool deadloop_detection_enabled = false;
+
+bool nemu_is_batch_mode(void) {
+  return is_batch_mode;
+}
+
+void nemu_enable_deadloop_detection(bool enable) {
+  deadloop_detection_enabled = enable;
+}
+
+bool nemu_deadloop_detection_enabled(void) {
+  return deadloop_detection_enabled;
+}
 
 static inline void init_log() {
 #ifdef DEBUG
