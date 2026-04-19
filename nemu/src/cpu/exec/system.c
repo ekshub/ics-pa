@@ -3,9 +3,10 @@
 
 void diff_test_skip_qemu();
 void diff_test_skip_nemu();
+void raise_intr(uint8_t NO, vaddr_t ret_addr);
 
-static uint32_t idtr_base;
-static uint16_t idtr_limit;
+uint32_t idtr_base;
+uint16_t idtr_limit;
 static CR0 cr0;
 static CR3 cr3;
 
@@ -42,7 +43,7 @@ make_EHelper(mov_cr2r) {
 }
 
 make_EHelper(int) {
-  TODO();
+  raise_intr(id_dest->val, decoding.seq_eip);
 
   print_asm("int %s", id_dest->str);
 
@@ -52,7 +53,11 @@ make_EHelper(int) {
 }
 
 make_EHelper(iret) {
-  TODO();
+  rtl_pop(&decoding.jmp_eip);
+  rtl_pop(&t0);
+  rtl_pop(&t1);
+  cpu.eflags = t1;
+  decoding.is_jmp = 1;
 
   print_asm("iret");
 }
