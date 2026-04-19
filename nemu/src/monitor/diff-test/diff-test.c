@@ -149,7 +149,42 @@ void difftest_step(uint32_t eip) {
 
   // TODO: Check the registers state with QEMU.
   // Set `diff` as `true` if they are not the same.
-  TODO();
+  if (r.eax != cpu.eax) {
+    printf("difftest mismatch at eip=0x%08x: eax nemu=0x%08x qemu=0x%08x\n", eip, cpu.eax, r.eax);
+    diff = true;
+  }
+  if (r.ecx != cpu.ecx) {
+    printf("difftest mismatch at eip=0x%08x: ecx nemu=0x%08x qemu=0x%08x\n", eip, cpu.ecx, r.ecx);
+    diff = true;
+  }
+  if (r.edx != cpu.edx) {
+    printf("difftest mismatch at eip=0x%08x: edx nemu=0x%08x qemu=0x%08x\n", eip, cpu.edx, r.edx);
+    diff = true;
+  }
+  if (r.ebx != cpu.ebx) {
+    printf("difftest mismatch at eip=0x%08x: ebx nemu=0x%08x qemu=0x%08x\n", eip, cpu.ebx, r.ebx);
+    diff = true;
+  }
+  if (r.esp != cpu.esp) {
+    printf("difftest mismatch at eip=0x%08x: esp nemu=0x%08x qemu=0x%08x\n", eip, cpu.esp, r.esp);
+    diff = true;
+  }
+  if (r.ebp != cpu.ebp) {
+    printf("difftest mismatch at eip=0x%08x: ebp nemu=0x%08x qemu=0x%08x\n", eip, cpu.ebp, r.ebp);
+    diff = true;
+  }
+  if (r.esi != cpu.esi) {
+    printf("difftest mismatch at eip=0x%08x: esi nemu=0x%08x qemu=0x%08x\n", eip, cpu.esi, r.esi);
+    diff = true;
+  }
+  if (r.edi != cpu.edi) {
+    printf("difftest mismatch at eip=0x%08x: edi nemu=0x%08x qemu=0x%08x\n", eip, cpu.edi, r.edi);
+    diff = true;
+  }
+  if (r.eip != cpu.eip) {
+    printf("difftest mismatch at eip=0x%08x: eip nemu=0x%08x qemu=0x%08x\n", eip, cpu.eip, r.eip);
+    diff = true;
+  }
 
   if (diff) {
     nemu_state = NEMU_END;
