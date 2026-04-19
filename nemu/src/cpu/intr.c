@@ -24,4 +24,9 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
 }
 
 void dev_raise_intr() {
+  const uint8_t irq_timer = 32;
+  if (!cpu.IF) {
+    return;
+  }
+  raise_intr(irq_timer, cpu.eip);
 }
