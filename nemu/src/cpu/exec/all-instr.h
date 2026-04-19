@@ -10,6 +10,9 @@ make_EHelper(leave);
 make_EHelper(cltd);
 make_EHelper(cwtl);
 make_EHelper(call);
+make_EHelper(jmp);
+make_EHelper(jcc);
+make_EHelper(jmp_rm);
 make_EHelper(sub);
 make_EHelper(xor);
 make_EHelper(ret);
@@ -26,6 +29,7 @@ make_EHelper(or);
 make_EHelper(shl);
 make_EHelper(shr);
 make_EHelper(sar);
+make_EHelper(setcc);
 
 make_EHelper(operand_size);
 make_EHelper(nop);
