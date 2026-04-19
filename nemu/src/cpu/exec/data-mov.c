@@ -17,13 +17,29 @@ make_EHelper(pop) {
 }
 
 make_EHelper(pusha) {
-  TODO();
+  rtl_mv(&t0, &cpu.esp);
+
+  rtl_lr_l(&t1, R_EAX); rtl_push(&t1);
+  rtl_lr_l(&t1, R_ECX); rtl_push(&t1);
+  rtl_lr_l(&t1, R_EDX); rtl_push(&t1);
+  rtl_lr_l(&t1, R_EBX); rtl_push(&t1);
+  rtl_push(&t0);
+  rtl_lr_l(&t1, R_EBP); rtl_push(&t1);
+  rtl_lr_l(&t1, R_ESI); rtl_push(&t1);
+  rtl_lr_l(&t1, R_EDI); rtl_push(&t1);
 
   print_asm("pusha");
 }
 
 make_EHelper(popa) {
-  TODO();
+  rtl_pop(&t1); rtl_sr_l(R_EDI, &t1);
+  rtl_pop(&t1); rtl_sr_l(R_ESI, &t1);
+  rtl_pop(&t1); rtl_sr_l(R_EBP, &t1);
+  rtl_pop(&t1);
+  rtl_pop(&t1); rtl_sr_l(R_EBX, &t1);
+  rtl_pop(&t1); rtl_sr_l(R_EDX, &t1);
+  rtl_pop(&t1); rtl_sr_l(R_ECX, &t1);
+  rtl_pop(&t1); rtl_sr_l(R_EAX, &t1);
 
   print_asm("popa");
 }
