@@ -1,6 +1,10 @@
 #include "cpu/exec.h"
 #include "all-instr.h"
 
+#ifdef DIFF_TEST
+void difftest_record_trace(uint32_t eip, uint32_t next_eip, const char *assembly);
+#endif
+
 typedef struct {
   DHelper decode;
   EHelper execute;
@@ -249,6 +253,11 @@ void exec_wrapper(bool print_flag) {
   update_eip();
 
 #ifdef DIFF_TEST
+#ifdef DEBUG
+  difftest_record_trace(eip, cpu.eip, decoding.assembly);
+#else
+  difftest_record_trace(eip, cpu.eip, "");
+#endif
   void difftest_step(uint32_t);
   difftest_step(eip);
 #endif

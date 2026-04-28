@@ -20,6 +20,27 @@ static bool is_skip_nemu;
 void diff_test_skip_qemu() { is_skip_qemu = true; }
 void diff_test_skip_nemu() { is_skip_nemu = true; }
 
+#define DIFF_TRACE_SIZE 16
+#define DIFF_TRACE_ASM_SIZE 96
+
+typedef struct {
+  uint32_t eip;
+  uint32_t next_eip;
+  char assembly[DIFF_TRACE_ASM_SIZE];
+} DiffTrace;
+
+static DiffTrace diff_trace[DIFF_TRACE_SIZE];
+static uint32_t diff_trace_count;
+
+void difftest_record_trace(uint32_t eip, uint32_t next_eip, const char *assembly) {
+  DiffTrace *trace = &diff_trace[diff_trace_count % DIFF_TRACE_SIZE];
+  trace->eip = eip;
+  trace->next_eip = next_eip;
+  strncpy(trace->assembly, assembly, DIFF_TRACE_ASM_SIZE - 1);
+  trace->assembly[DIFF_TRACE_ASM_SIZE - 1] = '\0';
+  diff_trace_count ++;
+}
+
 #define regcpy_from_nemu(regs) \
   do { \
     regs.eax = cpu.eax; \
@@ -126,6 +147,38 @@ void init_qemu_reg() {
   assert(ok == 1);
 }
 
+static void print_reg_diff(const char *name, uint32_t nemu, uint32_t qemu, bool *diff) {
+  if (nemu != qemu) {
+    printf("  %-6s nemu=0x%08x qemu=0x%08x\n", name, nemu, qemu);
+    *diff = true;
+  }
+}
+
+static void print_difftest_trace(void) {
+  uint32_t total = diff_trace_count < DIFF_TRACE_SIZE ? diff_trace_count : DIFF_TRACE_SIZE;
+  uint32_t start = diff_trace_count > total ? diff_trace_count - total : 0;
+
+  printf("Recent instructions:\n");
+  for (uint32_t i = 0; i < total; i ++) {
+    DiffTrace *trace = &diff_trace[(start + i) % DIFF_TRACE_SIZE];
+    printf("  0x%08x -> 0x%08x  %s\n",
+        trace->eip, trace->next_eip, trace->assembly);
+  }
+}
+
+#ifdef DIFF_EFLAGS
+static uint32_t comparable_eflags(uint32_t eflags) {
+  const uint32_t mask =
+    (1u << 0) |   // CF
+    (1u << 2) |   // PF
+    (1u << 6) |   // ZF
+    (1u << 7) |   // SF
+    (1u << 9) |   // IF
+    (1u << 11);   // OF
+  return eflags & mask;
+}
+#endif
+
 void difftest_step(uint32_t eip) {
   union gdb_regs r;
   bool diff = false;
@@ -147,46 +200,26 @@ void difftest_step(uint32_t eip) {
   gdb_si();
   gdb_getregs(&r);
 
-  // TODO: Check the registers state with QEMU.
-  // Set `diff` as `true` if they are not the same.
-  if (r.eax != cpu.eax) {
-    printf("difftest mismatch at eip=0x%08x: eax nemu=0x%08x qemu=0x%08x\n", eip, cpu.eax, r.eax);
-    diff = true;
-  }
-  if (r.ecx != cpu.ecx) {
-    printf("difftest mismatch at eip=0x%08x: ecx nemu=0x%08x qemu=0x%08x\n", eip, cpu.ecx, r.ecx);
-    diff = true;
-  }
-  if (r.edx != cpu.edx) {
-    printf("difftest mismatch at eip=0x%08x: edx nemu=0x%08x qemu=0x%08x\n", eip, cpu.edx, r.edx);
-    diff = true;
-  }
-  if (r.ebx != cpu.ebx) {
-    printf("difftest mismatch at eip=0x%08x: ebx nemu=0x%08x qemu=0x%08x\n", eip, cpu.ebx, r.ebx);
-    diff = true;
-  }
-  if (r.esp != cpu.esp) {
-    printf("difftest mismatch at eip=0x%08x: esp nemu=0x%08x qemu=0x%08x\n", eip, cpu.esp, r.esp);
-    diff = true;
-  }
-  if (r.ebp != cpu.ebp) {
-    printf("difftest mismatch at eip=0x%08x: ebp nemu=0x%08x qemu=0x%08x\n", eip, cpu.ebp, r.ebp);
-    diff = true;
-  }
-  if (r.esi != cpu.esi) {
-    printf("difftest mismatch at eip=0x%08x: esi nemu=0x%08x qemu=0x%08x\n", eip, cpu.esi, r.esi);
-    diff = true;
-  }
-  if (r.edi != cpu.edi) {
-    printf("difftest mismatch at eip=0x%08x: edi nemu=0x%08x qemu=0x%08x\n", eip, cpu.edi, r.edi);
-    diff = true;
-  }
-  if (r.eip != cpu.eip) {
-    printf("difftest mismatch at eip=0x%08x: eip nemu=0x%08x qemu=0x%08x\n", eip, cpu.eip, r.eip);
-    diff = true;
-  }
+  print_reg_diff("eax", cpu.eax, r.eax, &diff);
+  print_reg_diff("ecx", cpu.ecx, r.ecx, &diff);
+  print_reg_diff("edx", cpu.edx, r.edx, &diff);
+  print_reg_diff("ebx", cpu.ebx, r.ebx, &diff);
+  print_reg_diff("esp", cpu.esp, r.esp, &diff);
+  print_reg_diff("ebp", cpu.ebp, r.ebp, &diff);
+  print_reg_diff("esi", cpu.esi, r.esi, &diff);
+  print_reg_diff("edi", cpu.edi, r.edi, &diff);
+  print_reg_diff("eip", cpu.eip, r.eip, &diff);
+
+#ifdef DIFF_EFLAGS
+  print_reg_diff("eflags",
+      comparable_eflags(cpu.eflags),
+      comparable_eflags(r.eflags),
+      &diff);
+#endif
 
   if (diff) {
+    printf("difftest mismatch after instruction at eip=0x%08x\n", eip);
+    print_difftest_trace();
     nemu_state = NEMU_END;
   }
 }

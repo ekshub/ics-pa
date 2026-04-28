@@ -3,6 +3,7 @@
 
 //#define DEBUG
 //#define DIFF_TEST
+//#define DIFF_EFLAGS
 
 /* You will define this macro in PA2 */
 #define HAS_IOE
