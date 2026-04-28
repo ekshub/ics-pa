@@ -2,6 +2,7 @@
 #include <x86.h>
 
 #define RTC_PORT 0x48   // Note that this is not standard
+#define VGA_SYNC_PORT 0x100
 static unsigned long boot_time;
 
 void _ioe_init() {
@@ -40,6 +41,7 @@ void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
 }
 
 void _draw_sync() {
+  outb(VGA_SYNC_PORT, 0);
 }
 
 int _read_key() {

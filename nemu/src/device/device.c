@@ -22,6 +22,7 @@ void init_i8042();
 extern void timer_intr();
 extern void send_key(uint8_t, bool);
 extern void update_screen();
+extern void poll_keyboard_state();
 
 
 static void timer_sig_handler(int signum) {
@@ -66,6 +67,7 @@ void device_update() {
       default: break;
     }
   }
+  poll_keyboard_state();
 }
 
 void sdl_clear_event_queue() {

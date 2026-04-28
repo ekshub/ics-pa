@@ -34,15 +34,36 @@ static uint32_t keymap[256] = {
 #define KEY_QUEUE_LEN 1024
 static int key_queue[KEY_QUEUE_LEN];
 static int key_f = 0, key_r = 0;
+static bool key_pressed[256];
 
 #define KEYDOWN_MASK 0x8000
 
-void send_key(uint8_t scancode, bool is_keydown) {
-  if (nemu_state == NEMU_RUNNING &&
-      keymap[scancode] != _KEY_NONE) {
-    uint32_t am_scancode = keymap[scancode] | (is_keydown ? KEYDOWN_MASK : 0);
+static void enqueue_key(uint32_t am_scancode) {
+  int next = (key_r + 1) % KEY_QUEUE_LEN;
+  if (next != key_f) {
     key_queue[key_r] = am_scancode;
-    key_r = (key_r + 1) % KEY_QUEUE_LEN;
+    key_r = next;
+  }
+}
+
+void send_key(uint8_t scancode, bool is_keydown) {
+  if (nemu_state == NEMU_RUNNING && keymap[scancode] != _KEY_NONE) {
+    if (key_pressed[scancode] == is_keydown) {
+      return;
+    }
+    key_pressed[scancode] = is_keydown;
+    uint32_t am_scancode = keymap[scancode] | (is_keydown ? KEYDOWN_MASK : 0);
+    enqueue_key(am_scancode);
+  }
+}
+
+void poll_keyboard_state() {
+  const uint8_t *state = SDL_GetKeyboardState(NULL);
+  int scancode;
+  for (scancode = 0; scancode < 256; scancode++) {
+    if (keymap[scancode] != _KEY_NONE) {
+      send_key(scancode, state[scancode] != 0);
+    }
   }
 }
 

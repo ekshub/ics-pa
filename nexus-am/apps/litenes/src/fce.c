@@ -107,8 +107,8 @@ void fce_run()
             cpu_run(1364 / 12); // 1 scanline
         }
 
-        int key = _read_key();
-        if (key != _KEY_NONE) {
+        int key;
+        while ((key = _read_key()) != _KEY_NONE) {
           int down = (key & 0x8000) != 0;
           int code = key & ~0x8000;
           key_state[code] = down;
@@ -184,4 +184,3 @@ int main() {
   fce_run();
   return 1;
 }
-
